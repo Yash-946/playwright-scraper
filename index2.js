@@ -15,9 +15,6 @@ const fs = require("fs");
     }));
   });
 
-  // console.log(links[3].href);
-  // extractText(links[3].href);
-
   const combinedData = {
     extractedContent: [],
   };
@@ -31,13 +28,16 @@ const fs = require("fs");
   console.log("Collected JSON Data:");
   console.log(JSON.stringify(combinedData, null, 2));
 
+  // Write collected data to a JSON file
+  fs.writeFileSync("extracted_data.json", JSON.stringify(combinedData, null, 2));
+
   const pdf = await page.$$eval('td[colspan="3"] a', (elements) => {
     return elements.map((element) => ({
       href: element.getAttribute("href"),
     }));
   });
 
-  // downloading pdf files
+  // Uncomment the following lines if you want to download PDF files
   // for (let index = 0; index < pdf.length; index++) {
   //   downloadPDF(pdf[index].href, `downloaded-document-${index}.pdf`);
   // }
@@ -68,43 +68,48 @@ async function downloadPDF(pdfUrl, outputFilePath) {
     console.error("Error during HTTP request:", error);
   }
 }
-
 async function extractText(url) {
   const browser = await chromium.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
-  await page.goto(url);
-
-  const data = {
-    heading: [], // Array to hold heading data
-    mainContent: [], // Array for main content data
-    tableData: [], // Array for table data
-  };
-
-
-  //heading
-  const heading = await page.$$eval("td b", (headers) =>
-    headers.map((header) => header.textContent.trim())
-  );
-  // console.log(heading.join("\n"));
-  data.heading = heading;
-
-  //main content
-  const mainCont = await page.$$eval("td p", (paragraphs) =>
-    paragraphs.map((paragraph) => paragraph.textContent.trim())
-  );
-  // console.log(mainCont.join("\n"));
-  data.mainContent = mainCont
-
-  //table data
-  const table = await page.$$eval("table tbody .tablebg tr", (paragraphs) =>
-    paragraphs.map((paragraph) => paragraph.textContent.trim())
-  );
-  // console.log(table.join("\n"));
-  data.tableData = table
-
-  // console.log(data);
   
-  await browser.close();
-  return data;
+  try {
+    // Add a delay before navigating to the URL
+    await page.waitForTimeout(2000); // Adjust the delay time as needed
+
+    // Navigate to the URL
+    await page.goto(url);
+
+    const data = {
+      heading: [], // Array to hold heading data
+      mainContent: [], // Array for main content data
+      tableData: [], // Array for table data
+    };
+
+    //heading
+    const heading = await page.$$eval("td b", (headers) =>
+      headers.map((header) => header.textContent.trim())
+    );
+    data.heading = heading;
+
+    //main content
+    const mainCont = await page.$$eval("td p", (paragraphs) =>
+      paragraphs.map((paragraph) => paragraph.textContent.trim())
+    );
+    data.mainContent = mainCont;
+
+    //table data
+    const table = await page.$$eval("table tbody .tablebg tr", (paragraphs) =>
+      paragraphs.map((paragraph) => paragraph.textContent.trim())
+    );
+    data.tableData = table;
+
+    await browser.close();
+    return data;
+  } catch (error) {
+    console.error("Error during page navigation:", error);
+    await browser.close();
+    return null; // Return null if an error occurs
+  }
 }
+
