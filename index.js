@@ -91,6 +91,9 @@ const { chromium } = require('playwright');
     
     // !mid menu 
     const elements = await page.$$eval('.midmenu a', elements => elements.map(element => element.textContent.trim()));
+    const links = await page.$$eval('.example-min a', elements => elements.map(element => element.href));
+
+    console.log(links);
 
     //!left div
     const elements1 = await page.$$eval('.menuButton a', elements => elements.map(element => element.textContent.trim()));
